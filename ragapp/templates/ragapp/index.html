@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Local RAG</title>
+
+    <style>
+        body {
+            max-width: 52rem;
+            margin: 3rem auto;
+            padding: 0 1rem;
+            font: 16px system-ui, sans-serif;
+            background: #121212;
+            color: white;
+        }
+
+        form {
+            display: flex;
+            gap: .5rem;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: .7rem;
+        }
+
+        button {
+            padding: .7rem 1rem;
+        }
+
+        #answer {
+            white-space: pre-wrap;
+        }
+
+        #sources {
+            color: #aaa;
+        }
+
+        a {
+            color: #8ab4f8;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Local RAG</h1>
+
+    <form id="question-form">
+        <input
+            id="question"
+            name="q"
+            maxlength="2000"
+            placeholder="Ask a question"
+            required
+        >
+        <button type="submit">Ask</button>
+    </form>
+
+    <h2>Answer</h2>
+    <div id="answer" aria-live="polite"></div>
+
+    <h2>Sources</h2>
+    <ol id="sources"></ol>
+
+    <script>
+        const form = document.getElementById("question-form");
+        const question = document.getElementById("question");
+        const answer = document.getElementById("answer");
+        const sources = document.getElementById("sources");
+        const button = form.querySelector("button");
+
+        let stream;
+
+        function closeStream() {
+            if (stream) {
+                stream.close();
+                stream = null;
+            }
+
+            button.disabled = false;
+        }
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            closeStream();
+
+            answer.textContent = "";
+            sources.replaceChildren();
+            button.disabled = true;
+
+            const url = new URL("{% url 'chat' %}", location.origin);
+            url.searchParams.set("q", question.value.trim());
+
+            stream = new EventSource(url);
+
+            stream.addEventListener("sources", (event) => {
+                JSON.parse(event.data).forEach((source) => {
+                    const item = document.createElement("li");
+                    const link = document.createElement("a");
+
+                    link.href = source.url;
+                    link.textContent = source.title;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+
+                    item.append(link);
+                    sources.append(item);
+                });
+            });
+
+            stream.addEventListener("token", (event) => {
+                answer.textContent += JSON.parse(event.data).text;
+            });
+
+            stream.addEventListener("done", closeStream);
+
+            stream.addEventListener("error", (event) => {
+                if (event.data) {
+                    answer.textContent += "\n" + JSON.parse(event.data).message;
+                    closeStream();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

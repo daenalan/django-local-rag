@@ -1,0 +1,46 @@
+# Python cache & compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Local development settings
+*.sqlite3
+*.log
+
+# Media & static files (if generated locally)
+media/
+staticfiles/
+
+# Node / frontend build artifacts
+node_modules/
+*.tsbuildinfo
+
+# Git & version control
+.git/
+.gitignore
+
+# IDE & editor configs
+*.swp
+.idea/
+.vscode/
+
+# OS-specific files
+.DS_Store
+
+# Docker-related
+Dockerfile.dev
+docker-compose.override.yml
+
+
+# custom
+test.py
+test.txt
+debug-compose.txt
+debug-docker-file.txt
+debug-readme.txt
